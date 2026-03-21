@@ -1,6 +1,8 @@
+import { useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
 
 function Landing() {
+  const navigate = useNavigate();
   return (
     <div className="bg-[#f9f9fa] text-[#1a1c1d] antialiased">
       <Navbar />
@@ -22,7 +24,10 @@ function Landing() {
             className="w-[420px] mb-12 drop-shadow-xl"
           />
           <div className="flex flex-col sm:flex-row gap-4">
-            <button className="bg-gradient-primary text-white px-10 py-5 rounded-2xl font-bold text-lg hover:opacity-90 transition-all shadow-lg">
+            <button
+              onClick={() => navigate("/signin")}
+              className="bg-gradient-primary text-white px-10 py-5 rounded-2xl font-bold text-lg hover:opacity-90 transition-all shadow-lg"
+            >
               Start Your Transition
             </button>
             <button className="bg-[#e2e2e3] text-[#2e5f9c] px-10 py-5 rounded-2xl font-bold text-lg hover:bg-[#d5d5d6] transition-all">

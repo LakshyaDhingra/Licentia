@@ -1,19 +1,48 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import {
+  ClerkProvider,
+  SignedIn,
+  SignedOut,
+  RedirectToSignIn,
+} from "@clerk/clerk-react";
 import Landing from "./pages/Landing";
-import Navbar from "./components/Navbar";
+import SignInPage from "./pages/SignIn";
+import Dashboard from "./pages/Dashboard";
+import Onboarding from "./pages/Onboarding";
+import About from "./pages/About";
 
 function App() {
   return (
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<Landing />} />
+        <Route path="/signin/*" element={<SignInPage />} />
+        <Route path="/about" element={<About />} />
         <Route
           path="/onboarding"
-          element={<h1 className="text-4xl p-8">Onboarding coming soon</h1>}
+          element={
+            <>
+              <SignedIn>
+                <Onboarding />
+              </SignedIn>
+              <SignedOut>
+                <RedirectToSignIn />
+              </SignedOut>
+            </>
+          }
         />
         <Route
-          path="/simulator"
-          element={<h1 className="text-4xl p-8">Simulator coming soon</h1>}
+          path="/dashboard"
+          element={
+            <>
+              <SignedIn>
+                <Dashboard />
+              </SignedIn>
+              <SignedOut>
+                <RedirectToSignIn />
+              </SignedOut>
+            </>
+          }
         />
       </Routes>
     </BrowserRouter>
