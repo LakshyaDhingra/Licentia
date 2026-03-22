@@ -4,7 +4,7 @@
 
 ## The Problem
 
-50 million immigrants in the US need a driver's license. No app exists that teaches the _transition_ — what's different between your home country and the US. Existing apps treat everyone like a beginner. We don't.
+International people need a driver's license. No app exists that teaches the _transition_ — what's different between your home country and the destination country. Existing apps treat everyone like a beginner. We don't.
 
 ## What Licentia Does
 
