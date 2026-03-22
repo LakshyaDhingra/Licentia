@@ -5,7 +5,7 @@ export default async function handler(req, res) {
 
   if (req.method === "OPTIONS") return res.status(200).end();
 
-  const { state, goal } = req.body;
+  const { goal, state } = req.body;
 
   const response = await fetch("https://agent.tinyfish.ai/v1/agent/stream", {
     method: "POST",
@@ -14,12 +14,11 @@ export default async function handler(req, res) {
       Authorization: `Bearer ${process.env.TINYFISH_KEY}`,
     },
     body: JSON.stringify({
-      url: `https://www.dmv.ca.gov`,
+      url: `https://www.google.com/search?q=${encodeURIComponent(state + " DMV official website")}`,
       goal: goal,
     }),
   });
 
-  // Read the SSE stream and find the COMPLETE event
   const text = await response.text();
   const lines = text.split("\n");
 
@@ -39,6 +38,6 @@ export default async function handler(req, res) {
   return res.status(200).json({
     url:
       result ||
-      "https://www.dmv.ca.gov/portal/driver-education-and-safety/educational-materials/sample-driver-license-dl-knowledge-tests/",
+      `https://www.google.com/search?q=${encodeURIComponent(state + " DMV knowledge test booking")}`,
   });
 }
