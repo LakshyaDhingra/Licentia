@@ -83,7 +83,7 @@ function Simulator() {
         {/* Simulator */}
         <iframe
           id="app-frame"
-          src="https://playcanv.as/e/p/riORWZrp/"
+          src="https://playcanv.as/e/p/U2ZTa7Vr/"
           style={{
             width: "100%",
             height: "calc(100vh - 116px)",
