@@ -15,6 +15,8 @@ import Dashboard from "./pages/Dashboard";
 import Onboarding from "./pages/Onboarding";
 import About from "./pages/About";
 import KnowledgeTest from "./pages/KnowledgeTest";
+import Marketplace from "./pages/Marketplace";
+import Simulator from "./pages/Simulator";
 
 function App() {
   return (
@@ -34,6 +36,8 @@ function App() {
             </div>
           }
         />
+        <Route path="/marketplace" element={<Marketplace />} />
+        <Route path="/simulator" element={<Simulator />} />
         <Route path="/about" element={<About />} />
         <Route
           path="/onboarding"

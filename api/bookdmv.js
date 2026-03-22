@@ -5,7 +5,7 @@ export default async function handler(req, res) {
 
   if (req.method === "OPTIONS") return res.status(200).end();
 
-  const { state } = req.body;
+  const { state, goal } = req.body;
 
   const response = await fetch("https://agent.tinyfish.ai/v1/agent/stream", {
     method: "POST",
@@ -15,7 +15,7 @@ export default async function handler(req, res) {
     },
     body: JSON.stringify({
       url: `https://www.dmv.ca.gov`,
-      goal: `Find the page where someone can book or schedule a driver's license knowledge test or learner's permit test in ${state}. Return the direct URL to that booking page.`,
+      goal: goal,
     }),
   });
 
@@ -36,11 +36,9 @@ export default async function handler(req, res) {
     }
   }
 
-  return res
-    .status(200)
-    .json({
-      url:
-        result ||
-        "https://www.dmv.ca.gov/portal/driver-education-and-safety/educational-materials/sample-driver-license-dl-knowledge-tests/",
-    });
+  return res.status(200).json({
+    url:
+      result ||
+      "https://www.dmv.ca.gov/portal/driver-education-and-safety/educational-materials/sample-driver-license-dl-knowledge-tests/",
+  });
 }

@@ -1,7 +1,8 @@
 import { useUser, useClerk } from "@clerk/clerk-react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { bookDMVTest } from "../lib/tinyfish";
+import { insforge } from "../lib/insforge";
 
 function Dashboard() {
   const { user } = useUser();
@@ -9,6 +10,52 @@ function Dashboard() {
   const navigate = useNavigate();
   const location = useLocation();
   const { curriculumPath } = location.state || { curriculumPath: "beginner" };
+
+  const [userState, setUserState] = useState("California");
+  const [learnerUrl, setLearnerUrl] = useState(null);
+  const [roadUrl, setRoadUrl] = useState(null);
+  const [bookingLearner, setBookingLearner] = useState(false);
+  const [bookingRoad, setBookingRoad] = useState(false);
+  const [learnerPassed, setLearnerPassed] = useState(false);
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      if (!user) return;
+      const result = await insforge.database
+        .from("user_profiles")
+        .select("destination_state")
+        .eq("clerk_id", user.id)
+        .single();
+      if (result.data?.destination_state) {
+        setUserState(result.data.destination_state);
+      }
+    };
+    fetchProfile();
+  }, [user]);
+
+  const handleBookLearner = async () => {
+    setBookingLearner(true);
+    try {
+      const result = await bookDMVTest(userState, "learner");
+      setLearnerUrl(result.url);
+    } catch (err) {
+      console.error("Booking failed:", err);
+    } finally {
+      setBookingLearner(false);
+    }
+  };
+
+  const handleBookRoad = async () => {
+    setBookingRoad(true);
+    try {
+      const result = await bookDMVTest(userState, "road");
+      setRoadUrl(result.url);
+    } catch (err) {
+      console.error("Booking failed:", err);
+    } finally {
+      setBookingRoad(false);
+    }
+  };
 
   const content = {
     beginner: {
@@ -137,24 +184,9 @@ function Dashboard() {
   };
 
   const c = content[curriculumPath];
-  const [bookingUrl, setBookingUrl] = useState(null);
-  const [booking, setBooking] = useState(false);
-
-  const handleBookDMV = async () => {
-    setBooking(true);
-    try {
-      const result = await bookDMVTest("California");
-      setBookingUrl(result.url);
-    } catch (err) {
-      console.error("Booking failed:", err);
-    } finally {
-      setBooking(false);
-    }
-  };
 
   return (
     <div className="bg-[#f9f9fa] text-[#1a1c1d] min-h-screen">
-      {/* Header */}
       <header className="fixed top-0 left-0 right-0 z-50 bg-[#f9f9fa]/80 backdrop-blur-xl">
         <div className="flex items-center justify-between px-8 h-20 w-full max-w-screen-2xl mx-auto">
           <div className="text-2xl font-bold text-[#1a1c1d] tracking-tighter">
@@ -201,7 +233,6 @@ function Dashboard() {
       </header>
 
       <main className="pt-28 pb-12 max-w-screen-2xl mx-auto px-8">
-        {/* Welcome */}
         <section className="mb-12 flex flex-col md:flex-row md:items-end justify-between gap-6">
           <div>
             <span className="text-[#2e5f9c] font-bold tracking-widest text-xs uppercase mb-2 block">
@@ -211,7 +242,8 @@ function Dashboard() {
               Welcome back, {user?.firstName || "Driver"}.
             </h1>
             <p className="text-gray-500 text-lg max-w-xl leading-relaxed">
-              {c.tagline} — your personalized path to a driver's license.
+              {c.tagline} — your personalized path to a driver's license in{" "}
+              {userState}.
             </p>
           </div>
           <div className="flex items-center gap-3 bg-white p-4 rounded-xl shadow-sm">
@@ -232,9 +264,7 @@ function Dashboard() {
           </div>
         </section>
 
-        {/* Bento Grid */}
         <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
-          {/* Learning Progress */}
           <div className="md:col-span-8 bg-white rounded-xl p-8 shadow-sm flex flex-col justify-between">
             <div className="flex justify-between items-start mb-8">
               <div>
@@ -293,7 +323,6 @@ function Dashboard() {
             </div>
           </div>
 
-          {/* Recommended Lesson */}
           <div
             className={`md:col-span-4 ${c.color} rounded-xl p-8 text-white relative overflow-hidden flex flex-col justify-between shadow-xl`}
           >
@@ -318,7 +347,6 @@ function Dashboard() {
           </div>
         </div>
 
-        {/* Recent Activity */}
         <section className="mt-16">
           <h2 className="text-2xl font-bold tracking-tight mb-6">
             Recent Activities
@@ -352,13 +380,7 @@ function Dashboard() {
                     </td>
                     <td className="px-6 py-4 text-right">
                       <span
-                        className={`font-bold text-xs px-3 py-1 rounded-full ${
-                          activity.status === "COMPLETED"
-                            ? "text-[#2e5f9c] bg-[#d4e3ff]"
-                            : activity.status === "IN PROGRESS"
-                              ? "text-gray-600 bg-[#e2e2e3]"
-                              : "text-gray-400 bg-[#f3f3f4]"
-                        }`}
+                        className={`font-bold text-xs px-3 py-1 rounded-full ${activity.status === "COMPLETED" ? "text-[#2e5f9c] bg-[#d4e3ff]" : activity.status === "IN PROGRESS" ? "text-gray-600 bg-[#e2e2e3]" : "text-gray-400 bg-[#f3f3f4]"}`}
                       >
                         {activity.status}
                       </span>
@@ -369,25 +391,27 @@ function Dashboard() {
             </table>
           </div>
         </section>
-        {/* Book DMV Test */}
-        <section className="mt-12 mb-12">
+
+        {/* Two Stage DMV Booking */}
+        <section className="mt-12 mb-12 space-y-4">
+          {/* Stage 1 - Learner's Permit */}
           <div className="bg-[#1a1c1d] rounded-2xl p-10 text-white flex flex-col md:flex-row items-center justify-between gap-8">
             <div>
               <span className="text-[#83b0f2] font-bold tracking-widest text-xs uppercase mb-2 block">
-                Final Step
+                Step 1
               </span>
-              <h2 className="text-3xl font-bold tracking-tight mb-2">
-                Ready to book your DMV test?
+              <h2 className="text-2xl font-bold tracking-tight mb-2">
+                Book your learner's permit test
               </h2>
-              <p className="text-gray-400 max-w-lg">
-                We'll find the exact booking page on your state's DMV website so
-                you can schedule your learner's permit test right now.
+              <p className="text-gray-400 max-w-lg text-sm">
+                We'll find the exact knowledge test booking page on your{" "}
+                {userState} DMV website.
               </p>
             </div>
             <div className="flex flex-col gap-3 min-w-[200px]">
-              {bookingUrl && (
+              {learnerUrl && (
                 <a
-                  href={bookingUrl}
+                  href={learnerUrl}
                   target="_blank"
                   rel="noreferrer"
                   className="bg-[#2e5f9c] text-white px-8 py-4 rounded-xl font-bold text-center hover:bg-[#83b0f2] transition-all"
@@ -395,24 +419,90 @@ function Dashboard() {
                   Go to DMV Booking
                 </a>
               )}
-              {!bookingUrl && (
+              {!learnerUrl && (
                 <button
-                  onClick={handleBookDMV}
-                  disabled={booking}
-                  className={`px-8 py-4 rounded-xl font-bold flex items-center justify-center gap-2 transition-all ${booking ? "bg-gray-600 cursor-not-allowed" : "bg-white text-[#1a1c1d] hover:opacity-90"}`}
+                  onClick={handleBookLearner}
+                  disabled={bookingLearner}
+                  className={`px-8 py-4 rounded-xl font-bold flex items-center justify-center gap-2 transition-all ${bookingLearner ? "bg-gray-600 cursor-not-allowed" : "bg-white text-[#1a1c1d] hover:opacity-90"}`}
                 >
-                  {booking && (
+                  {bookingLearner && (
                     <>
-                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      <div className="w-4 h-4 border-2 border-[#1a1c1d] border-t-transparent rounded-full animate-spin" />
                       Finding DMV page...
                     </>
                   )}
-                  {!booking && (
+                  {!bookingLearner && (
                     <>
                       <span className="material-symbols-outlined">
                         calendar_month
                       </span>
-                      Book DMV Test
+                      Book Learner's Test
+                    </>
+                  )}
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Stage 2 - Road Test */}
+          <div
+            className={`rounded-2xl p-10 flex flex-col md:flex-row items-center justify-between gap-8 transition-all ${learnerPassed ? "bg-[#0f3d2a]" : "bg-[#2a2a2a]"} text-white`}
+          >
+            <div>
+              <span
+                className={`font-bold tracking-widest text-xs uppercase mb-2 block ${learnerPassed ? "text-[#4ade80]" : "text-gray-500"}`}
+              >
+                Step 2
+              </span>
+              <h2 className="text-2xl font-bold tracking-tight mb-2">
+                Book your road test
+              </h2>
+              <p className="text-gray-400 max-w-lg text-sm">
+                {learnerPassed
+                  ? "Congrats on passing your learner's test! Now book your in-car road test."
+                  : "Complete your learner's permit test first to unlock this step."}
+              </p>
+            </div>
+            <div className="flex flex-col gap-3 min-w-[200px]">
+              {!learnerPassed && (
+                <button
+                  onClick={() => setLearnerPassed(true)}
+                  className="px-8 py-4 rounded-xl font-bold flex items-center justify-center gap-2 bg-white/10 hover:bg-white/20 transition-all"
+                >
+                  <span className="material-symbols-outlined">
+                    check_circle
+                  </span>
+                  I passed my learner's test
+                </button>
+              )}
+              {learnerPassed && roadUrl && (
+                <a
+                  href={roadUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="bg-[#4ade80] text-[#0f3d2a] px-8 py-4 rounded-xl font-bold text-center hover:opacity-90 transition-all"
+                >
+                  Go to Road Test Booking
+                </a>
+              )}
+              {learnerPassed && !roadUrl && (
+                <button
+                  onClick={handleBookRoad}
+                  disabled={bookingRoad}
+                  className={`px-8 py-4 rounded-xl font-bold flex items-center justify-center gap-2 transition-all ${bookingRoad ? "bg-gray-600 cursor-not-allowed" : "bg-white text-[#1a1c1d] hover:opacity-90"}`}
+                >
+                  {bookingRoad && (
+                    <>
+                      <div className="w-4 h-4 border-2 border-[#1a1c1d] border-t-transparent rounded-full animate-spin" />
+                      Finding booking page...
+                    </>
+                  )}
+                  {!bookingRoad && (
+                    <>
+                      <span className="material-symbols-outlined">
+                        directions_car
+                      </span>
+                      Book Road Test
                     </>
                   )}
                 </button>
@@ -422,7 +512,6 @@ function Dashboard() {
         </section>
       </main>
 
-      {/* Mobile bottom nav */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur px-6 py-4 flex justify-between items-center z-50 shadow-lg">
         <a href="#" className="flex flex-col items-center gap-1 text-[#2e5f9c]">
           <span
@@ -433,10 +522,6 @@ function Dashboard() {
           </span>
           <span className="text-[10px] font-bold">Home</span>
         </a>
-        <a href="#" className="flex flex-col items-center gap-1 text-gray-500">
-          <span className="material-symbols-outlined">school</span>
-          <span className="text-[10px] font-medium">Courses</span>
-        </a>
         <a
           href="/simulator"
           className="flex flex-col items-center gap-1 text-gray-500"
@@ -444,7 +529,10 @@ function Dashboard() {
           <span className="material-symbols-outlined">drive_eta</span>
           <span className="text-[10px] font-medium">Sim</span>
         </a>
-        <a href="#" className="flex flex-col items-center gap-1 text-gray-500">
+        <a
+          href="/marketplace"
+          className="flex flex-col items-center gap-1 text-gray-500"
+        >
           <span className="material-symbols-outlined">shopping_bag</span>
           <span className="text-[10px] font-medium">Market</span>
         </a>

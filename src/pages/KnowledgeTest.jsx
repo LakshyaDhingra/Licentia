@@ -26,24 +26,34 @@ function KnowledgeTest() {
 
         if (!result.data) {
           navigate("/onboarding");
-          return;
+          return; // don't set loading false, just leave
         }
 
-        // If test already taken, skip to dashboard
         if (result.data.curriculum_path) {
           navigate("/dashboard", {
             state: { curriculumPath: result.data.curriculum_path },
           });
-          return;
+          return; // don't set loading false, just leave
         }
 
-        const { home_country, destination_country } = result.data;
-        setCountryPair({ home_country, destination_country });
-        const qs = await generateQuestions(home_country, destination_country);
+        const { home_country, destination_country, destination_state } =
+          result.data;
+        setCountryPair({
+          home_country,
+          destination_country,
+          destination_state,
+        });
+        const qs = await generateQuestions(
+          home_country,
+          destination_country,
+          destination_state,
+        );
+        console.log("questions generated:", qs);
         setQuestions(qs);
+        setLoading(false); // only set false when we actually need the test UI
       } catch (err) {
         console.error("Failed to load questions:", err);
-      } finally {
+        console.error("Error details:", JSON.stringify(err));
         setLoading(false);
       }
     };
@@ -145,9 +155,9 @@ function KnowledgeTest() {
           <div className="space-y-4">
             <span className="text-xs font-bold tracking-widest text-[#2e5f9c] uppercase">
               {question.category === "home"
-                ? countryPair?.home_country
-                : countryPair?.destination_country}{" "}
-              rules · {current + 1} of {questions.length}
+                ? `${countryPair?.home_country} rules`
+                : `${countryPair?.destination_state}, ${countryPair?.destination_country} rules`}{" "}
+              · {current + 1} of {questions.length}
             </span>
             <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-[#1a1c1d]">
               {question.question}

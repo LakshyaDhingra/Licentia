@@ -1,8 +1,7 @@
 import { useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { insforge } from "../lib/insforge";
 import { useUser } from "@clerk/clerk-react";
-import { useEffect } from "react";
 
 const countries = [
   { name: "Italy", flag: "https://flagcdn.com/w160/it.png" },
@@ -26,6 +25,59 @@ const destinations = [
   { name: "France", flag: "https://flagcdn.com/w160/fr.png" },
 ];
 
+const usStates = [
+  "Alabama",
+  "Alaska",
+  "Arizona",
+  "Arkansas",
+  "California",
+  "Colorado",
+  "Connecticut",
+  "Delaware",
+  "Florida",
+  "Georgia",
+  "Hawaii",
+  "Idaho",
+  "Illinois",
+  "Indiana",
+  "Iowa",
+  "Kansas",
+  "Kentucky",
+  "Louisiana",
+  "Maine",
+  "Maryland",
+  "Massachusetts",
+  "Michigan",
+  "Minnesota",
+  "Mississippi",
+  "Missouri",
+  "Montana",
+  "Nebraska",
+  "Nevada",
+  "New Hampshire",
+  "New Jersey",
+  "New Mexico",
+  "New York",
+  "North Carolina",
+  "North Dakota",
+  "Ohio",
+  "Oklahoma",
+  "Oregon",
+  "Pennsylvania",
+  "Rhode Island",
+  "South Carolina",
+  "South Dakota",
+  "Tennessee",
+  "Texas",
+  "Utah",
+  "Vermont",
+  "Virginia",
+  "Washington",
+  "West Virginia",
+  "Wisconsin",
+  "Wyoming",
+];
+
 function FlagSlider({ list, activeIndex, onPrev, onNext }) {
   const prev = (activeIndex - 1 + list.length) % list.length;
   const next = (activeIndex + 1) % list.length;
@@ -39,7 +91,6 @@ function FlagSlider({ list, activeIndex, onPrev, onNext }) {
             "linear-gradient(to right, transparent, black 20%, black 80%, transparent)",
         }}
       >
-        {/* Prev */}
         <div className="flex flex-col items-center opacity-30 scale-75 transition-all duration-500">
           <span className="text-[10px] font-bold uppercase tracking-widest mb-4">
             {list[prev].name}
@@ -52,7 +103,6 @@ function FlagSlider({ list, activeIndex, onPrev, onNext }) {
             />
           </div>
         </div>
-        {/* Active */}
         <div className="flex flex-col items-center scale-110 transition-all duration-500">
           <span className="text-sm font-black uppercase tracking-widest mb-4 text-[#2e5f9c]">
             {list[activeIndex].name}
@@ -65,7 +115,6 @@ function FlagSlider({ list, activeIndex, onPrev, onNext }) {
             />
           </div>
         </div>
-        {/* Next */}
         <div className="flex flex-col items-center opacity-30 scale-75 transition-all duration-500">
           <span className="text-[10px] font-bold uppercase tracking-widest mb-4">
             {list[next].name}
@@ -102,40 +151,75 @@ function Onboarding() {
   const { user } = useUser();
   const [homeIndex, setHomeIndex] = useState(0);
   const [destIndex, setDestIndex] = useState(0);
+  const [checking, setChecking] = useState(true);
+  const [step, setStep] = useState("countries");
+  const [selectedState, setSelectedState] = useState("California");
 
   useEffect(() => {
     const checkExisting = async () => {
       if (!user) return;
-      const result = await insforge.database
-        .from("user_profiles")
-        .select("*")
-        .eq("clerk_id", user.id)
-        .single();
+      try {
+        const result = await insforge.database
+          .from("user_profiles")
+          .select("*")
+          .eq("clerk_id", user.id)
+          .single();
 
-      if (result.data) {
-        navigate("/knowledge-test");
+        if (result.data && result.data.home_country) {
+          navigate("/knowledge-test");
+          return;
+        }
+        setChecking(false);
+        setChecking(false);
+      } catch (err) {
+        // no row found — show onboarding
+        setChecking(false);
       }
     };
     checkExisting();
   }, [user]);
 
+  if (checking)
+    return (
+      <div className="min-h-screen bg-[#f9f9fa] flex items-center justify-center">
+        <div className="w-10 h-10 border-4 border-[#83b0f2] border-t-[#2e5f9c] rounded-full animate-spin" />
+      </div>
+    );
+
   const handleStart = async () => {
     try {
-      const result = await insforge.database.from("user_profiles").upsert({
-        clerk_id: user.id,
-        home_country: countries[homeIndex].name,
-        destination_country: destinations[destIndex].name,
-      });
-      console.log("result:", result);
+      const existing = await insforge.database
+        .from("user_profiles")
+        .select("id")
+        .eq("clerk_id", user.id)
+        .single();
+
+      if (existing.data) {
+        await insforge.database
+          .from("user_profiles")
+          .update({
+            home_country: countries[homeIndex].name,
+            destination_country: destinations[destIndex].name,
+            destination_state: selectedState,
+            curriculum_path: null,
+          })
+          .eq("clerk_id", user.id);
+      } else {
+        await insforge.database.from("user_profiles").insert({
+          clerk_id: user.id,
+          home_country: countries[homeIndex].name,
+          destination_country: destinations[destIndex].name,
+          destination_state: selectedState,
+        });
+      }
     } catch (err) {
       console.error("Failed to save:", err);
     }
-    navigate("/dashboard");
+    navigate("/knowledge-test");
   };
 
   return (
     <div className="bg-[#f9f9fa] text-[#1a1c1d] antialiased overflow-hidden min-h-screen flex flex-col pb-32">
-      {/* Header */}
       <div className="w-full flex flex-col items-center pt-16 pb-8">
         <h1 className="text-4xl md:text-6xl font-black text-[#1a1c1d] tracking-tighter text-center mb-4">
           Your journey starts here.
@@ -145,61 +229,95 @@ function Onboarding() {
         </p>
       </div>
 
-      {/* Selectors */}
-      <div className="flex-1 flex flex-col md:flex-row">
-        {/* Home Country */}
-        <section className="flex-1 flex flex-col items-center justify-center px-4 md:border-r border-gray-200">
-          <div className="mb-8 text-center">
+      {step === "countries" && (
+        <div className="flex-1 flex flex-col md:flex-row">
+          <section className="flex-1 flex flex-col items-center justify-center px-4 md:border-r border-gray-200">
+            <div className="mb-8 text-center">
+              <h2 className="text-5xl font-black text-[#1a1c1d] tracking-tighter mb-2">
+                Home
+              </h2>
+              <p className="text-gray-500 font-medium uppercase tracking-widest text-xs">
+                Origin Country
+              </p>
+            </div>
+            <FlagSlider
+              list={countries}
+              activeIndex={homeIndex}
+              onPrev={() =>
+                setHomeIndex(
+                  (homeIndex - 1 + countries.length) % countries.length,
+                )
+              }
+              onNext={() => setHomeIndex((homeIndex + 1) % countries.length)}
+            />
+          </section>
+          <section className="flex-1 flex flex-col items-center justify-center px-4">
+            <div className="mb-8 text-center">
+              <h2 className="text-5xl font-black text-[#1a1c1d] tracking-tighter mb-2">
+                Destination
+              </h2>
+              <p className="text-gray-500 font-medium uppercase tracking-widest text-xs">
+                New Country
+              </p>
+            </div>
+            <FlagSlider
+              list={destinations}
+              activeIndex={destIndex}
+              onPrev={() =>
+                setDestIndex(
+                  (destIndex - 1 + destinations.length) % destinations.length,
+                )
+              }
+              onNext={() => setDestIndex((destIndex + 1) % destinations.length)}
+            />
+          </section>
+        </div>
+      )}
+
+      {step === "state" && (
+        <div className="flex-1 flex flex-col items-center justify-center px-8 gap-8">
+          <div className="text-center">
             <h2 className="text-5xl font-black text-[#1a1c1d] tracking-tighter mb-2">
-              Home
+              Which state?
             </h2>
             <p className="text-gray-500 font-medium uppercase tracking-widest text-xs">
-              Origin Country
+              Destination State
             </p>
           </div>
-          <FlagSlider
-            list={countries}
-            activeIndex={homeIndex}
-            onPrev={() =>
-              setHomeIndex(
-                (homeIndex - 1 + countries.length) % countries.length,
-              )
-            }
-            onNext={() => setHomeIndex((homeIndex + 1) % countries.length)}
-          />
-        </section>
+          <select
+            value={selectedState}
+            onChange={(e) => setSelectedState(e.target.value)}
+            className="w-full max-w-md px-6 py-4 rounded-xl bg-white border-2 border-[#83b0f2] text-[#1a1c1d] font-semibold text-lg focus:outline-none focus:border-[#2e5f9c]"
+          >
+            {usStates.map((state) => (
+              <option key={state} value={state}>
+                {state}
+              </option>
+            ))}
+          </select>
+          <p className="text-gray-400 text-sm">
+            This helps us find the right DMV rules and booking page for you.
+            (Available for US destinations only)
+          </p>
+        </div>
+      )}
 
-        {/* Destination */}
-        <section className="flex-1 flex flex-col items-center justify-center px-4">
-          <div className="mb-8 text-center">
-            <h2 className="text-5xl font-black text-[#1a1c1d] tracking-tighter mb-2">
-              Destination
-            </h2>
-            <p className="text-gray-500 font-medium uppercase tracking-widest text-xs">
-              New Country
-            </p>
-          </div>
-          <FlagSlider
-            list={destinations}
-            activeIndex={destIndex}
-            onPrev={() =>
-              setDestIndex(
-                (destIndex - 1 + destinations.length) % destinations.length,
-              )
-            }
-            onNext={() => setDestIndex((destIndex + 1) % destinations.length)}
-          />
-        </section>
-      </div>
-
-      {/* Bottom CTA */}
       <footer className="fixed bottom-0 w-full z-50 bg-[#f9f9fa]/90 backdrop-blur-2xl px-8 pt-6 pb-10 flex flex-col items-center gap-6">
-        <button
-          onClick={handleStart}
-          className="w-full max-w-md bg-gradient-primary text-white py-5 rounded-xl font-bold text-lg shadow-lg hover:opacity-90 active:scale-[0.98] transition-all"
-        >
-          Start Journey
-        </button>
+        {step === "countries" ? (
+          <button
+            onClick={() => setStep("state")}
+            className="w-full max-w-md bg-gradient-primary text-white py-5 rounded-xl font-bold text-lg shadow-lg hover:opacity-90 active:scale-[0.98] transition-all"
+          >
+            Next
+          </button>
+        ) : (
+          <button
+            onClick={handleStart}
+            className="w-full max-w-md bg-gradient-primary text-white py-5 rounded-xl font-bold text-lg shadow-lg hover:opacity-90 active:scale-[0.98] transition-all"
+          >
+            Start Journey
+          </button>
+        )}
       </footer>
     </div>
   );

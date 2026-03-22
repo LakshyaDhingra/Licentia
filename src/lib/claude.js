@@ -1,4 +1,15 @@
-export async function generateQuestions(homeCountry, destinationCountry) {
+export async function generateQuestions(
+  homeCountry,
+  destinationCountry,
+  destinationState,
+) {
+  console.log(
+    "generating for:",
+    homeCountry,
+    destinationCountry,
+    destinationState,
+  );
+
   const response = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
     headers: {
@@ -13,26 +24,32 @@ export async function generateQuestions(homeCountry, destinationCountry) {
       messages: [
         {
           role: "user",
-          content: `Generate exactly 10 driving knowledge questions in JSON format.
+          content: `Generate exactly 10 driving knowledge questions as a JSON array.
 
-5 questions should test knowledge of driving rules in ${homeCountry}.
-5 questions should test knowledge of driving rules in ${destinationCountry}.
+Questions 1-5: driving rules ONLY in ${homeCountry}
+Questions 6-10: driving rules ONLY in ${destinationState}, ${destinationCountry}
 
-Return ONLY a JSON array with no extra text, no markdown, no backticks. Each question object must have:
-- id (number 1-10)
-- question (string)
-- options (array of 4 strings)
-- correct (number 0-3, index of correct answer)
-- category ("home" for ${homeCountry} questions, "destination" for ${destinationCountry} questions)
+Return ONLY the JSON array, nothing else, no markdown.
 
-Make questions specific to real driving rules in those countries. Focus on differences that would trip up an international driver.`,
+Format:
+[{"id":1,"question":"In ${homeCountry}, ...?","options":["A","B","C","D"],"correct":0,"category":"home"},...]
+
+Use category "home" for questions 1-5, "destination" for questions 6-10.`,
         },
       ],
     }),
   });
 
   const data = await response.json();
-  const text = data.content[0].text;
-  const questions = JSON.parse(text);
+  const text = data.content[0].text.trim();
+
+  let questions;
+  try {
+    questions = JSON.parse(text);
+  } catch {
+    const match = text.match(/\[[\s\S]*\]/);
+    if (!match) throw new Error("No JSON found");
+    questions = JSON.parse(match[0]);
+  }
   return questions;
 }
