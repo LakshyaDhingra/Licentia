@@ -62,7 +62,7 @@ function KnowledgeTest() {
 
   const handleSelect = (index) => setSelected(index);
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (selected === null) return;
     const question = questions[current];
     const newAnswers = {
@@ -97,7 +97,7 @@ function KnowledgeTest() {
       else if (homeScore >= 0.4 || destScore >= 0.4) curriculumPath = "hybrid";
 
       // Save to InsForge
-      insforge.database
+      await insforge.database
         .from("user_profiles")
         .update({
           curriculum_path: curriculumPath,
