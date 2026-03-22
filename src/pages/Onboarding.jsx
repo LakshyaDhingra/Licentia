@@ -1,9 +1,206 @@
-function Onboarding() {
+import { useNavigate } from "react-router-dom";
+import { useState } from "react";
+import { insforge } from "../lib/insforge";
+import { useUser } from "@clerk/clerk-react";
+import { useEffect } from "react";
+
+const countries = [
+  { name: "Italy", flag: "https://flagcdn.com/w160/it.png" },
+  { name: "United Kingdom", flag: "https://flagcdn.com/w160/gb.png" },
+  { name: "Brazil", flag: "https://flagcdn.com/w160/br.png" },
+  { name: "India", flag: "https://flagcdn.com/w160/in.png" },
+  { name: "Mexico", flag: "https://flagcdn.com/w160/mx.png" },
+  { name: "Germany", flag: "https://flagcdn.com/w160/de.png" },
+  { name: "France", flag: "https://flagcdn.com/w160/fr.png" },
+  { name: "Japan", flag: "https://flagcdn.com/w160/jp.png" },
+  { name: "China", flag: "https://flagcdn.com/w160/cn.png" },
+  { name: "Australia", flag: "https://flagcdn.com/w160/au.png" },
+];
+
+const destinations = [
+  { name: "United States", flag: "https://flagcdn.com/w160/us.png" },
+  { name: "Canada", flag: "https://flagcdn.com/w160/ca.png" },
+  { name: "United Kingdom", flag: "https://flagcdn.com/w160/gb.png" },
+  { name: "Australia", flag: "https://flagcdn.com/w160/au.png" },
+  { name: "Germany", flag: "https://flagcdn.com/w160/de.png" },
+  { name: "France", flag: "https://flagcdn.com/w160/fr.png" },
+];
+
+function FlagSlider({ list, activeIndex, onPrev, onNext }) {
+  const prev = (activeIndex - 1 + list.length) % list.length;
+  const next = (activeIndex + 1) % list.length;
+
   return (
-    <div className="min-h-screen bg-[#f9f9fa] flex items-center justify-center">
-      <h1 className="text-4xl font-bold text-[#2e5f9c]">
-        Onboarding coming soon
-      </h1>
+    <div className="flex flex-col items-center">
+      <div
+        className="flex items-center gap-12 py-10 overflow-hidden"
+        style={{
+          maskImage:
+            "linear-gradient(to right, transparent, black 20%, black 80%, transparent)",
+        }}
+      >
+        {/* Prev */}
+        <div className="flex flex-col items-center opacity-30 scale-75 transition-all duration-500">
+          <span className="text-[10px] font-bold uppercase tracking-widest mb-4">
+            {list[prev].name}
+          </span>
+          <div className="w-32 h-20 rounded-xl shadow-lg overflow-hidden">
+            <img
+              src={list[prev].flag}
+              alt={list[prev].name}
+              className="w-full h-full object-cover"
+            />
+          </div>
+        </div>
+        {/* Active */}
+        <div className="flex flex-col items-center scale-110 transition-all duration-500">
+          <span className="text-sm font-black uppercase tracking-widest mb-4 text-[#2e5f9c]">
+            {list[activeIndex].name}
+          </span>
+          <div className="w-48 h-32 rounded-xl shadow-lg overflow-hidden border-4 border-[#83b0f2]">
+            <img
+              src={list[activeIndex].flag}
+              alt={list[activeIndex].name}
+              className="w-full h-full object-cover"
+            />
+          </div>
+        </div>
+        {/* Next */}
+        <div className="flex flex-col items-center opacity-30 scale-75 transition-all duration-500">
+          <span className="text-[10px] font-bold uppercase tracking-widest mb-4">
+            {list[next].name}
+          </span>
+          <div className="w-32 h-20 rounded-xl shadow-lg overflow-hidden">
+            <img
+              src={list[next].flag}
+              alt={list[next].name}
+              className="w-full h-full object-cover"
+            />
+          </div>
+        </div>
+      </div>
+      <div className="flex gap-4 mt-4">
+        <button
+          onClick={onPrev}
+          className="w-12 h-12 rounded-full flex items-center justify-center bg-[#e8e8e9] text-[#424750] hover:bg-[#2e5f9c] hover:text-white transition-all active:scale-90"
+        >
+          <span className="material-symbols-outlined">chevron_left</span>
+        </button>
+        <button
+          onClick={onNext}
+          className="w-12 h-12 rounded-full flex items-center justify-center bg-[#e8e8e9] text-[#424750] hover:bg-[#2e5f9c] hover:text-white transition-all active:scale-90"
+        >
+          <span className="material-symbols-outlined">chevron_right</span>
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function Onboarding() {
+  const navigate = useNavigate();
+  const { user } = useUser();
+  const [homeIndex, setHomeIndex] = useState(0);
+  const [destIndex, setDestIndex] = useState(0);
+
+  useEffect(() => {
+    const checkExisting = async () => {
+      if (!user) return;
+      const result = await insforge.database
+        .from("user_profiles")
+        .select("*")
+        .eq("clerk_id", user.id)
+        .single();
+
+      if (result.data) {
+        navigate("/knowledge-test");
+      }
+    };
+    checkExisting();
+  }, [user]);
+
+  const handleStart = async () => {
+    try {
+      const result = await insforge.database.from("user_profiles").upsert({
+        clerk_id: user.id,
+        home_country: countries[homeIndex].name,
+        destination_country: destinations[destIndex].name,
+      });
+      console.log("result:", result);
+    } catch (err) {
+      console.error("Failed to save:", err);
+    }
+    navigate("/dashboard");
+  };
+
+  return (
+    <div className="bg-[#f9f9fa] text-[#1a1c1d] antialiased overflow-hidden min-h-screen flex flex-col pb-32">
+      {/* Header */}
+      <div className="w-full flex flex-col items-center pt-16 pb-8">
+        <h1 className="text-4xl md:text-6xl font-black text-[#1a1c1d] tracking-tighter text-center mb-4">
+          Your journey starts here.
+        </h1>
+        <p className="text-gray-500 font-medium text-base md:text-xl text-center max-w-2xl px-6">
+          Let's personalize your path to an international driving license.
+        </p>
+      </div>
+
+      {/* Selectors */}
+      <div className="flex-1 flex flex-col md:flex-row">
+        {/* Home Country */}
+        <section className="flex-1 flex flex-col items-center justify-center px-4 md:border-r border-gray-200">
+          <div className="mb-8 text-center">
+            <h2 className="text-5xl font-black text-[#1a1c1d] tracking-tighter mb-2">
+              Home
+            </h2>
+            <p className="text-gray-500 font-medium uppercase tracking-widest text-xs">
+              Origin Country
+            </p>
+          </div>
+          <FlagSlider
+            list={countries}
+            activeIndex={homeIndex}
+            onPrev={() =>
+              setHomeIndex(
+                (homeIndex - 1 + countries.length) % countries.length,
+              )
+            }
+            onNext={() => setHomeIndex((homeIndex + 1) % countries.length)}
+          />
+        </section>
+
+        {/* Destination */}
+        <section className="flex-1 flex flex-col items-center justify-center px-4">
+          <div className="mb-8 text-center">
+            <h2 className="text-5xl font-black text-[#1a1c1d] tracking-tighter mb-2">
+              Destination
+            </h2>
+            <p className="text-gray-500 font-medium uppercase tracking-widest text-xs">
+              New Country
+            </p>
+          </div>
+          <FlagSlider
+            list={destinations}
+            activeIndex={destIndex}
+            onPrev={() =>
+              setDestIndex(
+                (destIndex - 1 + destinations.length) % destinations.length,
+              )
+            }
+            onNext={() => setDestIndex((destIndex + 1) % destinations.length)}
+          />
+        </section>
+      </div>
+
+      {/* Bottom CTA */}
+      <footer className="fixed bottom-0 w-full z-50 bg-[#f9f9fa]/90 backdrop-blur-2xl px-8 pt-6 pb-10 flex flex-col items-center gap-6">
+        <button
+          onClick={handleStart}
+          className="w-full max-w-md bg-gradient-primary text-white py-5 rounded-xl font-bold text-lg shadow-lg hover:opacity-90 active:scale-[0.98] transition-all"
+        >
+          Start Journey
+        </button>
+      </footer>
     </div>
   );
 }

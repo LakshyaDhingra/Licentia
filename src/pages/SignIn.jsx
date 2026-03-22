@@ -51,6 +51,7 @@ function SignInPage() {
               path="/signin"
               afterSignInUrl="/onboarding"
               afterSignUpUrl="/onboarding"
+              signUpUrl="/signup"
               appearance={{
                 elements: {
                   rootBox: "w-full",

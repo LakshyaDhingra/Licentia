@@ -4,12 +4,17 @@ import {
   SignedIn,
   SignedOut,
   RedirectToSignIn,
+  SignUp,
+  SignIn,
+  useUser,
+  useClerk,
 } from "@clerk/clerk-react";
 import Landing from "./pages/Landing";
 import SignInPage from "./pages/SignIn";
 import Dashboard from "./pages/Dashboard";
 import Onboarding from "./pages/Onboarding";
 import About from "./pages/About";
+import KnowledgeTest from "./pages/KnowledgeTest";
 
 function App() {
   return (
@@ -17,6 +22,18 @@ function App() {
       <Routes>
         <Route path="/" element={<Landing />} />
         <Route path="/signin/*" element={<SignInPage />} />
+        <Route
+          path="/signup/*"
+          element={
+            <div className="min-h-screen bg-[#f9f9fa] flex items-center justify-center">
+              <SignUp
+                routing="path"
+                path="/signup"
+                afterSignUpUrl="/onboarding"
+              />
+            </div>
+          }
+        />
         <Route path="/about" element={<About />} />
         <Route
           path="/onboarding"
@@ -24,6 +41,19 @@ function App() {
             <>
               <SignedIn>
                 <Onboarding />
+              </SignedIn>
+              <SignedOut>
+                <RedirectToSignIn />
+              </SignedOut>
+            </>
+          }
+        />
+        <Route
+          path="/knowledge-test"
+          element={
+            <>
+              <SignedIn>
+                <KnowledgeTest />
               </SignedIn>
               <SignedOut>
                 <RedirectToSignIn />

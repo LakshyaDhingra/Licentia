@@ -30,7 +30,14 @@ function Landing() {
             >
               Start Your Transition
             </button>
-            <button className="bg-[#e2e2e3] text-[#2e5f9c] px-10 py-5 rounded-2xl font-bold text-lg hover:bg-[#d5d5d6] transition-all">
+            <button
+              onClick={() =>
+                document
+                  .getElementById("features")
+                  .scrollIntoView({ behavior: "smooth" })
+              }
+              className="bg-[#e2e2e3] text-[#2e5f9c] px-10 py-5 rounded-2xl font-bold text-lg hover:bg-[#d5d5d6] transition-all"
+            >
               How It Works
             </button>
           </div>
@@ -38,7 +45,6 @@ function Landing() {
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[140%] h-[140%] bg-[radial-gradient(circle_at_center,_#d4e3ff33_0%,_transparent_70%)] pointer-events-none" />
       </section>
 
-      {/* 50M+ Stat Section */}
       <section className="bg-[#f3f3f4] py-32 px-8 overflow-hidden">
         <div className="max-w-7xl mx-auto grid md:grid-cols-12 gap-12 items-center">
           <div className="md:col-span-7">
@@ -50,7 +56,6 @@ function Landing() {
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-12">
                 <div className="text-white">
-                  <span className="text-6xl font-bold block mb-2">50M+</span>
                   <p className="text-lg opacity-90 font-medium">
                     Immigrants currently navigating the road system.
                   </p>
@@ -121,8 +126,8 @@ function Landing() {
                 </h3>
                 <p className="text-gray-500 text-lg max-w-md">
                   Our algorithm analyzes your home country's driving rules and
-                  highlights the exact differences you need to know for your US
-                  state.
+                  highlights the exact differences you need to know for your new
+                  place.
                 </p>
               </div>
               <div className="mt-12 z-10 flex items-center gap-4">
@@ -135,7 +140,7 @@ function Landing() {
                   </div>
                 </div>
                 <span className="text-sm font-bold text-gray-500">
-                  Custom Path: India → California
+                  Custom Path: Delhi → California
                 </span>
               </div>
             </div>
@@ -234,30 +239,6 @@ function Landing() {
               </div>
             </div>
           </div>
-        </div>
-      </section>
-
-      {/* Final CTA */}
-      <section className="py-32 px-8">
-        <div className="max-w-5xl mx-auto rounded-[3rem] bg-[#1a1c1d] text-white py-20 px-8 md:px-20 text-center relative overflow-hidden">
-          <div className="relative z-10">
-            <h2 className="text-4xl md:text-6xl font-bold tracking-tight mb-8">
-              Ready to drive your new life?
-            </h2>
-            <p className="text-xl text-gray-400 mb-12 max-w-xl mx-auto">
-              Join drivers who successfully transitioned their licenses with
-              Licentia.
-            </p>
-            <div className="flex flex-col sm:flex-row justify-center gap-4">
-              <button className="bg-[#2e5f9c] text-white px-10 py-5 rounded-2xl font-bold text-lg hover:bg-[#83b0f2] transition-all">
-                Start Your Free Lesson
-              </button>
-              <button className="border-2 border-gray-600 text-white px-10 py-5 rounded-2xl font-bold text-lg hover:bg-white/10 transition-all">
-                View State Guides
-              </button>
-            </div>
-          </div>
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_bottom_right,_#2e5f9c44_0%,_transparent_50%)] pointer-events-none" />
         </div>
       </section>
 
