@@ -18,7 +18,7 @@ International people need a driver's license. No app exists that teaches the _tr
 
 - React + Vite
 - Tailwind CSS v4
-- Three.js + PlayCanvas (simulator)
+- JS + PlayCanvas (simulator)
 - Supabase → InsForge (database)
 - Clerk (authentication)
 - Claude API (AI question generation)
